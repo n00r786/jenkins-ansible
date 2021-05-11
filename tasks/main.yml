@@ -1,0 +1,61 @@
+- tasks:
+  - name: Copy Ubuntu SEP Enterprise Cloud Agent
+    copy:
+      src: files/UCSF_SEP14.3.1.0a-Ent-Cloud-Ubuntu-Linux.elf
+      dest: /tmp/UCSF_SEP14.3.1.0a-Ent-Cloud-Ubuntu-Linux.elf
+      mode: '0740'
+      when: ansible_distribution == 'Ubuntu'
+
+- name: Copy CentOS SEP Enterprise Cloud Agent
+  copy:
+    src: files/UCSF_SEP14.3.1.0a-Ent-Cloud-CentOS-Linux.elf
+    dest: /tmp/UCSF_SEP14.3.1.0a-Ent-Cloud-CentOS-Linux.elf
+    mode: '0740'
+    when: ansible_distribution == 'CentOS'
+
+- name: Copy Ubuntu SEP Agent Status Check Script
+  copy:
+    src: files/checkAgentStatus.sh
+    dest: /tmp/checkAgentStatus.sh
+    mode: '0740'
+    when: ansible_distribution == 'Ubuntu'
+
+- name: Copy CentOS SEP Agent Status Check Script
+  copy:
+    src: files/checkAgentStatus.sh
+    dest: /tmp/checkAgentStatus.sh
+    mode: '0740'
+    when: ansible_distribution == 'CentOS'
+
+- name: Install Ubuntu SEP Enterprise Cloud Agent
+  become: true
+  command: /tmp/UCSF_SEP14.3.1.0a-Ent-Cloud-Ubuntu-Linux.elf
+  when: ansible_distribution == 'Ubuntu'
+ 
+- name: Install CentOS SEP Enterprise Cloud Agent
+  become: true
+  command: /tmp/UCSF_SEP14.3.1.0a-Ent-Cloud-CentOS-Linux.elf
+  when: ansible_distribution == 'CentOS'
+  
+- name: starting the cafdeamon service
+  service:
+       name: cafdaemon.service
+       state: started
+
+- name: Checking the SEPM verion in Ubuntu
+  command: /tmp/UCSF_SEP14.3.1.0a-Ent-Cloud-Ubuntu-Linux.elf -V
+  when: ansible_distribution == 'Ubuntu'
+  
+- name: Checking the SEPM verion in CentOS
+  command: /tmp/UCSF_SEP14.3.1.0a-Ent-Cloud-CentOS-Linux.elf -V
+  when: ansible_distribution == 'CentOS'  
+  
+- shell: /tmp/checkAgentStatus.sh
+  register: ps
+  become: yes
+  become_method: sudo
+- debug: var=ps.stdout_lines
+
+- name: reboot the servers
+  reboot:
+       test_command: uptime
